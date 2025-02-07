@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Post extends Model
 {
     use HasFactory;
-    protected $fillable = ['user_id', 'content'];
+    protected $fillable = ['user_id', 'content', 'latitude', 'longitude'];
 
     public function user(){
         return $this->belongsTo(User::class);
