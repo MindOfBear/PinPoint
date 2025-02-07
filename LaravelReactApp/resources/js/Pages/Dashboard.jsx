@@ -129,9 +129,12 @@ const Dashboard = () => {
                             </div>
                         </div>
                         <div className="flex flex-col gap-4">
-                            <div className="bg-blue-500 aspect-square rounded-lg flex items-center justify-center border-4 border-blue-200">
-                                <Map posts={posts} />
-                            </div>
+                        <div 
+                            className="bg-blue-500 aspect-square rounded-lg flex items-center justify-center border-4 border-blue-200" 
+                            style={{ filter: showForm ? 'blur(5px)' : 'none' }}
+                        >
+                            <Map posts={posts} />
+                        </div>
                             <div className="bg-blue-500 aspect-square rounded-lg flex items-center justify-center">
                                 Ceva aici
                             </div>
