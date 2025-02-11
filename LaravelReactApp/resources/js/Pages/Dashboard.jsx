@@ -4,6 +4,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Map from '@/Components/Map';
+import TrueFocus from '@/Components/Countup';
 
 const Dashboard = () => {
     const { posts } = usePage().props;
@@ -135,8 +136,15 @@ const Dashboard = () => {
                         >
                             <Map posts={posts} />
                         </div>
-                            <div className="bg-blue-500 aspect-square rounded-lg flex items-center justify-center">
-                                Ceva aici
+                            <div className="border-blue-300 border-4 aspect-square rounded-lg flex items-center justify-center">
+                                <TrueFocus 
+                                    sentence="PinPoint your Toughts"
+                                    manualMode={false}
+                                    blurAmount={3}
+                                    borderColor="blue"
+                                    animationDuration={2}
+                                    pauseBetweenAnimations={1}
+                                />
                             </div>
                         </div>
                     </div>
