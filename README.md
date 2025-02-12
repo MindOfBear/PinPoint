@@ -12,3 +12,12 @@ I made this project to learn more about Leaflet and Laravel and React with Inert
   ### You can understand better by watching the video.
 
 [![Watch the video](http://img.youtube.com/vi/aKPYrIQsCD4/mq3.jpg)](https://youtu.be/aKPYrIQsCD4)
+
+
+## Used technologies:
+- React
+- Laravel
+- MySQL
+- Tailwind CSS
+- Leaflet
+- Inertia.js
