@@ -79,6 +79,18 @@ const Dashboard = () => {
         }
     };
 
+    const handleLike = async (postId) => {
+        try {
+            const response = await axios.post(`/posts/${postId}/like`);
+            
+            if (response.status === 200) {
+                router.reload({ only: ['posts'] });
+            }
+        } catch (error) {
+            toast.error('Failed to like post.');
+        }
+    };
+
     return (
         <AuthenticatedLayout
             header={
@@ -128,12 +140,15 @@ const Dashboard = () => {
                                             <div className="text-gray-700">{post.content}</div>
                                             <div className="text-sm text-gray-500">{post.user?.name}</div>
                                             <div className="flex gap-2 mt-2 justify-between">
-                                                <div>
-                                                    <button className="px-3 py-1 bg-blue-500 text-white rounded">
-                                                        <i className="fa fa-thumbs-up"/>
-                                                    </button>
-                                                    <span className="text-gray-600 ml-2">928 likes</span>
-                                                </div>
+                                            <div>
+                                                <button
+                                                    onClick={() => handleLike(post.id)}
+                                                    className={`px-3 py-1 ${post.liked_by_user ? 'bg-blue-800 scale-95' : 'bg-blue-500'} text-white rounded transition-all duration-300 transform`}
+                                                >
+                                                    <i className="fa fa-thumbs-up"/>
+                                                </button>
+                                                <span className="text-gray-600 ml-2">{post.likes_count}</span>
+                                            </div>
                                                 {post.user?.id === auth?.user?.id && (
                                                     <button 
                                                         className="px-3 py-1 bg-red-500 text-white rounded" 
@@ -142,7 +157,6 @@ const Dashboard = () => {
                                                         <i className="fa fa-trash"/>
                                                     </button>
                                                 )}
-                                               
                                             </div>
                                         </div>
                                     </div>

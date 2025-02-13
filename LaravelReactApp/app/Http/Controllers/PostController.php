@@ -22,7 +22,7 @@ class PostController extends Controller
 
         $radius = 4000;
 
-        $posts = Post::with('user')
+        $posts = Post::with('user', 'likes')
             ->selectRaw("
                 *, 
                 (6371000 * acos(
@@ -35,6 +35,12 @@ class PostController extends Controller
             ->having('distance', '<=', $radius)
             ->orderBy('created_at', 'desc')
             ->get();
+        
+            $posts->map(function ($post) {
+                $post->likes_count = $post->likes->count();
+                $post->liked_by_user = $post->likes->where('user_id', Auth::id())->count() > 0;
+                return $post;
+            });
 
         return Inertia::render('Dashboard', [
             'posts' => $posts,
@@ -68,5 +74,26 @@ class PostController extends Controller
         $post->delete();
         return response()->json(['message' => 'Post deleted successfully']);
     }
+
+    public function likePost(Post $post)
+{
+    $user = Auth::user();
     
+    if (!$user) {
+        return response()->json(['message' => 'User not authenticated'], 401);
+    }
+    
+    $like = Like::where('user_id', $user->id)->where('post_id', $post->id)->first();
+
+    if ($like){
+        $like->delete();
+        return response()->json(['message' => 'Like removed']);
+    } else {
+        $like = Like::create([
+            'user_id' => $user->id,
+            'post_id' => $post->id,
+        ]);
+        return response()->json(['message' => 'Post liked']);
+    }
+}
 }
