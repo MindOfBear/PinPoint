@@ -5,9 +5,10 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Map from '@/Components/Map';
 import TrueFocus from '@/Components/Countup';
+import 'font-awesome/css/font-awesome.min.css';
 
 const Dashboard = () => {
-    const { posts } = usePage().props;
+    const { posts, auth } = usePage().props;
     const [showForm, setShowForm] = useState(false);
     const [content, setContent] = useState('');
     const [userLocation, setUserLocation] = useState([44.3302, 23.7949]);
@@ -66,6 +67,18 @@ const Dashboard = () => {
         router.reload({ only: ['posts'] });
     };
 
+    const handleDelete = async (postId) => {
+        if (!confirm("Are you sure you want to delete this post?")) return;
+    
+        try {
+            await axios.delete(`/posts/${postId}`);
+            toast.success("Post deleted successfully!");
+            router.reload({ only: ['posts'] });
+        } catch (error) {
+            toast.error("Failed to delete post.");
+        }
+    };
+
     return (
         <AuthenticatedLayout
             header={
@@ -114,6 +127,23 @@ const Dashboard = () => {
                                         <div className="p-6 text-gray-900">
                                             <div className="text-gray-700">{post.content}</div>
                                             <div className="text-sm text-gray-500">{post.user?.name}</div>
+                                            <div className="flex gap-2 mt-2 justify-between">
+                                                <div>
+                                                    <button className="px-3 py-1 bg-blue-500 text-white rounded">
+                                                        <i className="fa fa-thumbs-up"/>
+                                                    </button>
+                                                    <span className="text-gray-600 ml-2">928 likes</span>
+                                                </div>
+                                                {post.user?.id === auth?.user?.id && (
+                                                    <button 
+                                                        className="px-3 py-1 bg-red-500 text-white rounded" 
+                                                        onClick={() => handleDelete(post.id)}
+                                                    >
+                                                        <i className="fa fa-trash"/>
+                                                    </button>
+                                                )}
+                                               
+                                            </div>
                                         </div>
                                     </div>
                                 ))

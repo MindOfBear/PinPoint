@@ -5,6 +5,7 @@ use App\Models\Post;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use App\Models\Like;
 
 class PostController extends Controller
 {
@@ -15,7 +16,7 @@ class PostController extends Controller
 
         if (!$latitude || !$longitude) {
             return Inertia::render('Dashboard', [
-                'posts' => []
+                'posts' => [],
             ]);
         }
 
@@ -32,7 +33,7 @@ class PostController extends Controller
                 [$latitude, $longitude, $latitude]
             )
             ->having('distance', '<=', $radius)
-            ->orderBy('distance')
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return Inertia::render('Dashboard', [
@@ -57,4 +58,15 @@ class PostController extends Controller
 
         return response()->json($post, 201);
     }
+
+    public function destroy(Post $post)
+    {
+        if (Auth::id() !== $post->user_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $post->delete();
+        return response()->json(['message' => 'Post deleted successfully']);
+    }
+    
 }
