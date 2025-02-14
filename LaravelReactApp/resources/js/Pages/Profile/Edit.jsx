@@ -63,7 +63,7 @@ export default function Edit({ mustVerifyEmail, status }) {
                         </div>
                     </div>
                 </div>   
-                <div className="mx-auto max-w-7xl px-6 lg:px-8">
+                <div className="mx-auto max-w-3xl px-6 lg:px-8">
                 {posts && posts.length > 0 ? (
                     <div>
                         <p className="text-md font-semibold ml-5">{auth?.user?.name}</p>

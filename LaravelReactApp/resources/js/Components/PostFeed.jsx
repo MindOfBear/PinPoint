@@ -35,17 +35,17 @@ const PostFeed = ({ posts, auth, router }) => {
                 posts.map((post) => (
                     <div key={post.id} className="overflow-hidden bg-white shadow-sm sm:rounded-lg my-4">
                         <div className="p-6 text-gray-900">
-                            <div className="text-gray-700 mb-1">{post.content}</div>
+                            <div className="text-md text-gray-500 font-semibold">{post.user?.name}</div>
+                            <div className="text-gray-700 font-medium mt-1 ml-1">{post.content}</div>
                             {post.photo && (
-                                <div className="mt-2">
+                                <div className="mt-2 flex items-center justify-center">
                                     <img 
                                         src={`/storage/${post.photo}`} 
                                         alt="Post photo" 
-                                        className="w-full h-auto rounded" 
+                                        className="w-full h-auto max-w-[500px] max-h-auto object-cover rounded-lg shadow-lg border-2 border-transparent"
                                     />
                                 </div>
                             )}
-                            <div className="text-sm text-gray-500">{post.user?.name}</div>
                             <div className="flex gap-2 mt-2 justify-between">
                                 <div>
                                     <button
