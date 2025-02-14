@@ -96,24 +96,5 @@ class PostController extends Controller
             return response()->json(['message' => 'Post liked']);
         }
     }
-
-    public function edit()
-    {
-        $user = Auth::user();
-
-        $posts = Post::where('user_id', $user->id)
-            ->with(['user', 'likes'])
-            ->get();
-
-        $posts->each(function ($post) use ($user) {
-            $post->likes_count = $post->likes->count();
-            $post->liked_by_user = $post->likes->contains('user_id', $user->id);
-        });
-
-
-        return Inertia::render('Edit', [
-            'posts' => $posts, 
-            'auth' => $user,
-        ]);
-    }
+    
 }

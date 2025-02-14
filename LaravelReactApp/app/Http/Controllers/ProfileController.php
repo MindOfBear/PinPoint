@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\Post;
 
 class ProfileController extends Controller
 {
@@ -18,7 +19,20 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        $user = Auth::user();
+
+        $posts = Post::where('user_id', $user->id)
+            ->with(['user', 'likes'])
+            ->get();
+
+        $posts->each(function ($post) use ($user) {
+            $post->likes_count = $post->likes->count();
+            $post->liked_by_user = $post->likes->contains('user_id', $user->id);
+        });
+
         return Inertia::render('Profile/Edit', [
+            'user' => $user,
+            'posts' => $posts,
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
         ]);

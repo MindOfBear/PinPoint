@@ -60,7 +60,7 @@ const PostFeed = ({ posts, auth, router }) => {
                     </div>
                 ))
             ) : (
-                <div className="text-gray-500">No posts available.</div>
+                <div className="text-gray-500">You have no posts</div>
             )}
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6 text-gray-900 text-center">
