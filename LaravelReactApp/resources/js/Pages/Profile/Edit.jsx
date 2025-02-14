@@ -37,6 +37,7 @@ export default function Edit({ mustVerifyEmail, status }) {
             }
         >
             <Head title="Profile" />
+            <ToastContainer />
             <div className="py-12">
             <div id='toggleDiv' className={`${isVisible ? '' : 'hidden'}`}>
                     <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
