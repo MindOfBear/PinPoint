@@ -76,24 +76,44 @@ class PostController extends Controller
     }
 
     public function likePost(Post $post)
-{
-    $user = Auth::user();
-    
-    if (!$user) {
-        return response()->json(['message' => 'User not authenticated'], 401);
-    }
-    
-    $like = Like::where('user_id', $user->id)->where('post_id', $post->id)->first();
+    {
+        $user = Auth::user();
+        
+        if (!$user) {
+            return response()->json(['message' => 'User not authenticated'], 401);
+        }
+        
+        $like = Like::where('user_id', $user->id)->where('post_id', $post->id)->first();
 
-    if ($like){
-        $like->delete();
-        return response()->json(['message' => 'Like removed']);
-    } else {
-        $like = Like::create([
-            'user_id' => $user->id,
-            'post_id' => $post->id,
-        ]);
-        return response()->json(['message' => 'Post liked']);
+        if ($like){
+            $like->delete();
+            return response()->json(['message' => 'Like removed']);
+        } else {
+            $like = Like::create([
+                'user_id' => $user->id,
+                'post_id' => $post->id,
+            ]);
+            return response()->json(['message' => 'Post liked']);
+        }
     }
-}
+
+    public function edit()
+    {
+        $user = Auth::user();
+
+        $posts = Post::where('user_id', $user->id)
+            ->with(['user', 'likes'])
+            ->get();
+
+        $posts->each(function ($post) use ($user) {
+            $post->likes_count = $post->likes->count();
+            $post->liked_by_user = $post->likes->contains('user_id', $user->id);
+        });
+
+
+        return Inertia::render('Edit', [
+            'posts' => $posts, 
+            'auth' => $user,
+        ]);
+    }
 }

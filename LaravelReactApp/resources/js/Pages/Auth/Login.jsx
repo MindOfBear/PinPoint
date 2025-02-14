@@ -91,7 +91,7 @@ export default function Login({ status, canResetPassword }) {
                             Forgot your password?
                         </Link>
                     )}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between w-full">
 
                         <Link
                             href={route('register')}

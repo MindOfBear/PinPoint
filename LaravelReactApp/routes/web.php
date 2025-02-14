@@ -5,14 +5,13 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\PostController;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'appVersion' => env('APP_VERSION'),
-        'appBranch' => env('APP_BRANCH'),
-    ]);
+    if (Auth::check()) {
+        return redirect()->route('dashboard');
+    }
+    return Inertia::render('Auth/Login');
 });
 
 Route::get('/dashboard', function () {
@@ -27,8 +26,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [PostController::class, 'index'])->name('dashboard');
     Route::delete('/posts/{post}', [PostController::class, 'destroy'])->middleware('auth');
     Route::post('/posts/{post}/like', [PostController::class, 'likePost'])->middleware('auth');
-    
-
+    Route::get('/edit', [PostController::class, 'edit'])->middleware('auth');
 });
 
 
