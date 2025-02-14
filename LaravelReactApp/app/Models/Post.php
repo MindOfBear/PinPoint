@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class Post extends Model
 {
     use HasFactory;
-    protected $fillable = ['user_id', 'content', 'latitude', 'longitude'];
+
+    protected $fillable = ['user_id', 'content', 'latitude', 'longitude', 'photo'];
 
     public function user(){
         return $this->belongsTo(User::class);
@@ -16,5 +17,10 @@ class Post extends Model
 
     public function likes(){
         return $this->hasMany(Like::class);
+    }
+    
+    public function getPhotoUrlAttribute()
+    {
+        return $this->photo ? asset('storage/' . $this->photo) : null;
     }
 }

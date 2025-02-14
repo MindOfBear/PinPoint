@@ -53,13 +53,20 @@ class PostController extends Controller
             'content' => 'required|string|max:255',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
+
+        $photoPath = null;
+        if ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('posts', 'public');
+        }
 
         $post = Post::create([
             'user_id' => Auth::id(),
             'latitude' => $validated['latitude'],
             'longitude' => $validated['longitude'],
             'content' => $validated['content'],
+            'photo' => $photoPath,
         ]);
 
         return response()->json($post, 201);

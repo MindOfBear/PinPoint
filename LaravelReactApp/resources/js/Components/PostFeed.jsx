@@ -36,6 +36,15 @@ const PostFeed = ({ posts, auth, router }) => {
                     <div key={post.id} className="overflow-hidden bg-white shadow-sm sm:rounded-lg my-4">
                         <div className="p-6 text-gray-900">
                             <div className="text-gray-700 mb-1">{post.content}</div>
+                            {post.photo && (
+                                <div className="mt-2">
+                                    <img 
+                                        src={`/storage/${post.photo}`} 
+                                        alt="Post photo" 
+                                        className="w-full h-auto rounded" 
+                                    />
+                                </div>
+                            )}
                             <div className="text-sm text-gray-500">{post.user?.name}</div>
                             <div className="flex gap-2 mt-2 justify-between">
                                 <div>

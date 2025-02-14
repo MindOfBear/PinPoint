@@ -15,6 +15,7 @@ const Dashboard = () => {
     const [content, setContent] = useState('');
     const [userLocation, setUserLocation] = useState([44.3302, 23.7949]);
     const [locationLoaded, setLocationLoaded] = useState(false);
+    const [file, setFile] = useState(null);
 
     const getUserLocation = () => {
         if (!navigator.geolocation) {
@@ -52,15 +53,80 @@ const Dashboard = () => {
     const handlePostSubmit = async (e) => {
         e.preventDefault();
         const [latitude, longitude] = userLocation;
-
-        try {
-            await axios.post('/posts', { content, latitude, longitude });
-            setContent('');
-            setShowForm(false);
-            toast.success('Post created!');
-            router.reload({ only: ['posts'] });
-        } catch (error) {
-            toast.error('Failed to create post.');
+        
+        const formData = new FormData();
+        formData.append('content', content);
+        formData.append('latitude', latitude);
+        formData.append('longitude', longitude);
+        
+        if (file) {
+            const img = new Image();
+            const reader = new FileReader();
+    
+            reader.onload = () => {
+                img.src = reader.result;
+    
+                img.onload = async () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    const MAX_WIDTH = 1920;
+                    const MAX_HEIGHT = 1080;
+                    let width = img.width;
+                    let height = img.height;
+    
+                    if (width > MAX_WIDTH) {
+                        height = (height * MAX_WIDTH) / width;
+                        width = MAX_WIDTH;
+                    }
+                    if (height > MAX_HEIGHT) {
+                        width = (width * MAX_HEIGHT) / height;
+                        height = MAX_HEIGHT;
+                    }
+    
+                    canvas.width = width;
+                    canvas.height = height;
+    
+                    ctx.drawImage(img, 0, 0, width, height);
+    
+                    canvas.toBlob((blob) => {
+                        formData.append('photo', blob, 'resized-image.jpg');
+                        
+                        axios.post('/posts', formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data'
+                            }
+                        })
+                        .then(() => {
+                            setContent('');
+                            setFile(null);
+                            setShowForm(false);
+                            toast.success('Post created!');
+                            router.reload({ only: ['posts'] });
+                        })
+                        .catch(() => {
+                            toast.error('Failed to create post.');
+                        });
+                    }, 'image/jpeg', 0.75);
+                };
+            };
+            
+            reader.readAsDataURL(file);
+        } else {
+            axios.post('/posts', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+            .then(() => {
+                setContent('');
+                setShowForm(false);
+                toast.success('Post created!');
+                router.reload({ only: ['posts'] });
+            })
+            .catch(() => {
+                toast.error('Failed to create post.');
+            });
         }
     };
 
@@ -89,6 +155,11 @@ const Dashboard = () => {
                                 className="w-full p-2 border border-gray-300 rounded mb-4"
                                 placeholder="Write your post..."
                             />
+                            <input
+                                type="file"
+                                onChange={(e) => setFile(e.target.files[0])}
+                                className="w-full p-2 border border-gray-300 rounded mb-4"
+                            />
                             <div className="flex justify-between">
                                 <button type="submit" className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded">
                                     Post
@@ -107,14 +178,14 @@ const Dashboard = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="md:col-span-2 space-y-4">
                             <PostFeed posts={posts} auth={auth} router={router} />
-                        </div>
-                        <div className="flex flex-col gap-4">
-                        <div 
-                            className="bg-blue-500 aspect-square rounded-lg flex items-center justify-center border-4 border-blue-200" 
-                            style={{ filter: showForm ? 'blur(5px)' : 'none' }}
-                        >
-                            <Map posts={posts} />
-                        </div>
+                            </div>
+                            <div className="flex flex-col gap-4">
+                                <div 
+                                    className="bg-blue-500 aspect-square rounded-lg flex items-center justify-center border-4 border-blue-200" 
+                                    style={{ filter: showForm ? 'blur(5px)' : 'none' }}
+                                >
+                                    <Map posts={posts} />
+                                </div>
                             <div className="border-blue-300 border-4 aspect-square rounded-lg flex items-center justify-center">
                                 <TrueFocus 
                                     sentence="PinPoint your Toughts"
