@@ -1,4 +1,4 @@
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import { usePage, router, Head } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { toast, ToastContainer } from 'react-toastify';
@@ -7,6 +7,11 @@ import Map from '@/Components/Map';
 import TrueFocus from '@/Components/Countup';
 import 'font-awesome/css/font-awesome.min.css';
 import PostFeed from '@/Components/PostFeed';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import CheckoutForm from './CheckoutForm';
+
+const stripePromise = loadStripe('pk_test_51RMc7AP5kbCjdYcNTAIwdv92R6f9mUSDWgG2iOX4sspUM6TMsV8zNXYjIob1flLyNczXyAjVFJ0zsROdPaAOiNDz00AHE4fv2N');
 
 const Dashboard = () => {
     const { posts, auth } = usePage().props;
@@ -16,6 +21,30 @@ const Dashboard = () => {
     const [userLocation, setUserLocation] = useState([44.3302, 23.7949]);
     const [locationLoaded, setLocationLoaded] = useState(false);
     const [file, setFile] = useState(null);
+    const [price, setPrice] = useState('');
+
+    const [buyingPost, setBuyingPost] = useState(null);
+    const [buyerName, setBuyerName] = useState('');
+    const [buyerAddress, setBuyerAddress] = useState('');
+    const [buyerPhone, setBuyerPhone] = useState('');
+    const [buyerEmail, setBuyerEmail] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState('ramburs');
+
+    const [cardNumber, setCardNumber] = useState('');
+    const [expiry, setExpiry] = useState('');
+    const [cvc, setCvc] = useState('');
+    
+    const [clientSecret, setClientSecret] = useState(null);
+
+    useEffect(() => {
+      if (paymentMethod === 'card' && buyingPost) {
+        axios.post('/create-payment-intent', {
+          amount: buyingPost.price
+        }).then(res => {
+          setClientSecret(res.data.clientSecret);
+        });
+      }
+    }, [paymentMethod, buyingPost]);
 
     const getUserLocation = () => {
         if (!navigator.geolocation) {
@@ -58,6 +87,7 @@ const Dashboard = () => {
         formData.append('content', content);
         formData.append('latitude', latitude);
         formData.append('longitude', longitude);
+        formData.append('price', price);
         
         if (file) {
             const img = new Image();
@@ -130,6 +160,88 @@ const Dashboard = () => {
         }
     };
 
+    const handleBuySubmit = async (e) => {
+        e.preventDefault();
+        if (!buyingPost) return;
+    
+        if (paymentMethod === 'card') {
+            if (!clientSecret) {
+                toast.error('Payment not initialized.');
+                return;
+            }
+
+            const stripe = window.Stripe(stripePromise);
+            const elements = stripe.elements();
+            const cardElement = elements.getElement(CardElement);
+
+            const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+                payment_method: {
+                    card: cardElement,
+                    billing_details: {
+                        name: buyerName,
+                        address: {
+                            line1: buyerAddress,
+                        },
+                    },
+                },
+            });
+
+            if (error) {
+                toast.error('Payment failed: ' + error.message);
+            } else if (paymentIntent.status === 'succeeded') {
+                // Plată reușită
+                try {
+                    await axios.post('/orders', {
+                        post_id: buyingPost.id,
+                        seller_id: buyingPost.user.id,
+                        buyer_id: auth.user.id,
+                        name: buyerName,
+                        address: buyerAddress,
+                        buyer_phone: buyerPhone,
+                        buyer_email: buyerEmail,
+                        payment_method: paymentMethod,
+                        payment_status: 'success',
+                    });
+                    toast.success('Order placed successfully!');
+                    setBuyingPost(null);
+                    setBuyerName('');
+                    setBuyerAddress('');
+                    setBuyerPhone('');
+                    setBuyerEmail('');
+                } catch (error) {
+                    toast.error('Failed to place order.');
+                }
+            } else {
+                toast.error('Payment failed.');
+            }
+            return;
+        }
+    
+        // Dacă plata este "ramburs", trimitem comanda fără a trece prin procesul Stripe
+        if (paymentMethod === 'ramburs') {
+            try {
+                await axios.post('/orders', {
+                    post_id: buyingPost.id,
+                    seller_id: buyingPost.user.id,
+                    buyer_id: auth.user.id,
+                    name: buyerName,
+                    address: buyerAddress,
+                    buyer_phone: buyerPhone,
+                    buyer_email: buyerEmail,
+                    payment_method: paymentMethod,
+                });
+                toast.success('Order placed successfully!');
+                setBuyingPost(null);
+                setBuyerName('');
+                setBuyerAddress('');
+                setBuyerPhone('');
+                setBuyerEmail('');
+            } catch (error) {
+                toast.error('Failed to place order.');
+            }
+        }
+    };
+
     return (
         <AuthenticatedLayout
             header={
@@ -147,18 +259,27 @@ const Dashboard = () => {
             {showForm && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
                     <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
-                        <h3 className="text-lg text-center font-semibold mb-4">Post your thoughts!</h3>
+                        <h3 className="text-lg text-center font-semibold mb-4">Create a post!</h3>
                         <form onSubmit={handlePostSubmit}>
                             <textarea
                                 value={content}
                                 onChange={(e) => setContent(e.target.value)}
                                 className="w-full p-2 border border-gray-300 rounded mb-4"
-                                placeholder="Write your post..."
+                                placeholder="Ad description..."
                             />
                             <input
                                 type="file"
                                 onChange={(e) => setFile(e.target.files[0])}
                                 className="w-full p-2 border border-gray-300 rounded mb-4"
+                            />
+                            <input
+                                type="number"
+                                value={price}
+                                onChange={(e) => setPrice(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded mb-4"
+                                placeholder="Price (EUR)"
+                                min="0"
+                                step="0.01"
                             />
                             <div className="flex justify-between">
                                 <button type="submit" className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded">
@@ -173,11 +294,171 @@ const Dashboard = () => {
                 </div>
             )}
 
+            {buyingPost && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+                        <h3 className="text-lg text-center font-semibold mb-4">Complete your order</h3>
+                        <div className="mb-4">
+                            {buyingPost.photo_url && (
+                                <img src={buyingPost.photo_url} alt="Post" className="w-full h-48 object-cover rounded mb-2" />
+                            )}
+                            <h4 className="text-lg font-semibold">{buyingPost.content}</h4>
+                            <p className="text-sm text-gray-500">Published: {new Date(buyingPost.created_at).toLocaleString()}</p>
+                            <p className="text-sm text-gray-500">By: {buyingPost.user?.name}</p>
+                        </div>
+                        {paymentMethod === 'ramburs' ? (
+                          <form onSubmit={handleBuySubmit}>
+                            <input
+                              type="text"
+                              value={buyerName}
+                              onChange={(e) => setBuyerName(e.target.value)}
+                              className="w-full p-2 border border-gray-300 rounded mb-4"
+                              placeholder="Full name"
+                              required
+                            />
+                            <textarea
+                              value={buyerAddress}
+                              onChange={(e) => setBuyerAddress(e.target.value)}
+                              className="w-full p-2 border border-gray-300 rounded mb-4"
+                              placeholder="Address"
+                              required
+                            />
+                            <input
+                              type="tel"
+                              value={buyerPhone}
+                              onChange={(e) => setBuyerPhone(e.target.value)}
+                              className="w-full p-2 border border-gray-300 rounded mb-4"
+                              placeholder="Phone number"
+                              required
+                            />
+                            <input
+                              type="email"
+                              value={buyerEmail}
+                              onChange={(e) => setBuyerEmail(e.target.value)}
+                              className="w-full p-2 border border-gray-300 rounded mb-4"
+                              placeholder="Email adress"
+                              required
+                            />
+                            <select
+                              value={paymentMethod}
+                              onChange={(e) => setPaymentMethod(e.target.value)}
+                              className="w-full p-2 border border-gray-300 rounded mb-4"
+                            >
+                              <option value="ramburs">Ramburs</option>
+                              <option value="card">Card</option>
+                            </select>
+                            <div className="flex justify-between">
+                              <button type="submit" className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded">
+                                Place Order
+                              </button>
+                              <button type="button" onClick={() => setBuyingPost(null)} className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+                                Cancel
+                              </button>
+                            </div>
+                          </form>
+                        ) : (
+                          <Elements stripe={stripePromise}>
+                            {clientSecret && (
+                              <div className="flex flex-col gap-2">
+                                <input
+                                  type="text"
+                                  value={buyerName}
+                                  onChange={(e) => setBuyerName(e.target.value)}
+                                  className="w-full p-2 border border-gray-300 rounded mb-4"
+                                  placeholder="Your name"
+                                  required
+                                />
+                                <textarea
+                                  value={buyerAddress}
+                                  onChange={(e) => setBuyerAddress(e.target.value)}
+                                  className="w-full p-2 border border-gray-300 rounded mb-4"
+                                  placeholder="Your address"
+                                  required
+                                />
+                                <input
+                                  type="tel"
+                                  value={buyerPhone}
+                                  onChange={(e) => setBuyerPhone(e.target.value)}
+                                  className="w-full p-2 border border-gray-300 rounded mb-4"
+                                  placeholder="Phone number"
+                                  required
+                                />
+                                <input
+                                  type="email"
+                                  value={buyerEmail}
+                                  onChange={(e) => setBuyerEmail(e.target.value)}
+                                  className="w-full p-2 border border-gray-300 rounded mb-4"
+                                  placeholder="Email address"
+                                  required
+                                />
+                                <select
+                                  value={paymentMethod}
+                                  onChange={(e) => setPaymentMethod(e.target.value)}
+                                  className="w-full p-2 border border-gray-300 rounded mb-4"
+                                >
+                                  <option value="ramburs">Ramburs</option>
+                                  <option value="card">Card</option>
+                                </select>
+                                <CheckoutForm
+                                    clientSecret={clientSecret}
+                                    amount={buyingPost.price}
+                                    onSuccess={async () => {
+                                        console.log('Payment successful!');
+                                        // Log the POST values for clarity
+                                        console.log('Posting order:', {
+                                            post_id: buyingPost.id,
+                                            seller_id: buyingPost.user.id,
+                                            buyer_id: auth.user.id,
+                                            name: buyerName,
+                                            address: buyerAddress,
+                                            buyer_phone: buyerPhone,
+                                            buyer_email: buyerEmail,
+                                            payment_method: 'card',
+                                            payment_status: 'success',
+                                        });
+                                        try {
+                                            await axios.post('/orders', {
+                                                post_id: buyingPost.id,
+                                                seller_id: buyingPost.user.id,
+                                                buyer_id: auth.user.id,
+                                                name: buyerName,
+                                                address: buyerAddress,
+                                                buyer_phone: buyerPhone,
+                                                buyer_email: buyerEmail,
+                                                payment_method: 'card',
+                                                payment_status: 'success',
+                                            });
+                                            toast.success('Order has been placed succesfully!');
+                                            setBuyingPost(null);
+                                            setBuyerName('');
+                                            setBuyerAddress('');
+                                            setBuyerPhone('');
+                                            setBuyerEmail('');
+                                        } catch (error) {
+                                            toast.error('Failed to place order.');
+                                        }
+                                    }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setBuyingPost(null)}
+                                  className="text-sm text-gray-600 hover:text-gray-800 text-center mt-5"
+                                >
+                                <i className="fa fa-times"></i> Cancel
+                                </button>
+                              </div>
+                            )}
+                          </Elements>
+                        )}
+                    </div>
+                </div>
+            )}
+
             <div className="py-12">
                 <div className="mx-auto max-w-7xl px-6 lg:px-8">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="md:col-span-2 space-y-4">
-                            <PostFeed posts={posts} auth={auth} router={router} />
+                            <PostFeed posts={posts} auth={auth} router={router} onBuy={setBuyingPost} />
                             </div>
                             <div className="flex flex-col gap-4">
                                 <div 
@@ -188,12 +469,12 @@ const Dashboard = () => {
                                 </div>
                             <div className="border-blue-300 border-4 aspect-square rounded-lg flex items-center justify-center">
                                 <TrueFocus 
-                                    sentence="PinPoint your Toughts"
+                                    sentence="PinPoint and make the deal!"
                                     manualMode={false}
                                     blurAmount={3}
                                     borderColor="blue"
                                     animationDuration={2}
-                                    pauseBetweenAnimations={1}
+                                    pauseBetweenAnimations={0.5}
                                 />
                             </div>
                         </div>

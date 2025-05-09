@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\Post;
+use App\Models\Order;
 
 class ProfileController extends Controller
 {
@@ -21,6 +22,7 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
 
+        // Fetch the user's posts
         $posts = Post::where('user_id', $user->id)
             ->with(['user', 'likes'])
             ->get();
@@ -30,9 +32,18 @@ class ProfileController extends Controller
             $post->liked_by_user = $post->likes->contains('user_id', $user->id);
         });
 
+        // Fetch the orders where the user is the buyer
+        $buyer_orders = Order::with(['post', 'seller'])->where('buyer_id', $user->id)->get();
+
+        // Fetch the orders where the user is the seller
+        $seller_orders = Order::with(['post', 'buyer'])->where('seller_id', $user->id)->get();
+
+        // Send the data to the frontend (Inertia)
         return Inertia::render('Profile/Edit', [
             'user' => $user,
             'posts' => $posts,
+            'buyer_orders' => $buyer_orders,
+            'seller_orders' => $seller_orders,
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
         ]);

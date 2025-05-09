@@ -13,6 +13,7 @@ class PostController extends Controller
     {
         $latitude = $request->query('latitude');
         $longitude = $request->query('longitude');
+        $price = $request->input('price');
 
         if (!$latitude || !$longitude) {
             return Inertia::render('Dashboard', [
@@ -20,21 +21,25 @@ class PostController extends Controller
             ]);
         }
 
-        $radius = 4000;
+        // $radius = 4000;
+
+        // $posts = Post::with('user', 'likes')
+        //     ->selectRaw("
+        //         *, 
+        //         (6371000 * acos(
+        //             cos(radians(?)) * cos(radians(latitude)) * 
+        //             cos(radians(longitude) - radians(?)) + 
+        //             sin(radians(?)) * sin(radians(latitude))
+        //         )) AS distance", 
+        //         [$latitude, $longitude, $latitude]
+        //     )
+        //     ->having('distance', '<=', $radius)
+        //     ->orderBy('created_at', 'desc')
+        //     ->get();
 
         $posts = Post::with('user', 'likes')
-            ->selectRaw("
-                *, 
-                (6371000 * acos(
-                    cos(radians(?)) * cos(radians(latitude)) * 
-                    cos(radians(longitude) - radians(?)) + 
-                    sin(radians(?)) * sin(radians(latitude))
-                )) AS distance", 
-                [$latitude, $longitude, $latitude]
-            )
-            ->having('distance', '<=', $radius)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        ->orderBy('created_at', 'desc')
+        ->get();
         
             $posts->map(function ($post) {
                 $post->likes_count = $post->likes->count();
@@ -54,6 +59,7 @@ class PostController extends Controller
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'price' => 'nullable|numeric|min:0',
         ]);
 
         $photoPath = null;
@@ -67,6 +73,7 @@ class PostController extends Controller
             'longitude' => $validated['longitude'],
             'content' => $validated['content'],
             'photo' => $photoPath,
+            'price' => $validated['price'],
         ]);
 
         return response()->json($post, 201);

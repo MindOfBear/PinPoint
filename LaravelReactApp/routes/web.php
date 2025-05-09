@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\PostController;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\StripePaymentController;
 
 Route::get('/', function () {
     if (Auth::check()) {
@@ -27,6 +29,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/posts/{post}', [PostController::class, 'destroy'])->middleware('auth');
     Route::post('/posts/{post}/like', [PostController::class, 'likePost'])->middleware('auth');
 });
+
+Route::post('/orders', [OrderController::class, 'store']);
+
+Route::post('/create-payment-intent', [StripePaymentController::class, 'createPaymentIntent']);
 
 
 require __DIR__.'/auth.php';
