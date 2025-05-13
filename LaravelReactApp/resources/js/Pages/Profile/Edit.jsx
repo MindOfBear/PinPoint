@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pie } from 'react-chartjs-2';
+import { Doughnut, Pie } from 'react-chartjs-2';
 import {
     Chart as ChartJS,
     ArcElement,
@@ -228,7 +228,7 @@ export default function Edit({ mustVerifyEmail, status }) {
                         </div>
                         <div className="fixed rounded-2xl bottom-6 right-6 bg-white p-6 shadow-lg w-full max-w-xs z-50">
                             <h3 className="text-lg font-semibold mb-4">Sales Overview</h3>
-                            <Pie data={{
+                            <Doughnut data={{
                                 labels: seller_orders.map(order => order.post.content),
                                 datasets: [{
                                     label: 'Price',
@@ -239,7 +239,6 @@ export default function Edit({ mustVerifyEmail, status }) {
                             }} />
                             <div className="mt-4 text-right text-sm font-semibold text-gray-800">
                                 Total: {seller_orders.reduce((sum, o) => sum + Number(o.post?.price || 0), 0).toFixed(2)} EUR
-                            
                             </div>
                         </div>
                     </div>
