@@ -33,4 +33,17 @@ class OrderController extends Controller
             return response()->json(['message' => 'Failed to place order', 'error' => $e->getMessage()], 500);
         }
     }
+    public function accept(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+
+        if (now()->diffInHours($order->created_at) > 48) {
+            return redirect()->back()->with('error', 'Order can no longer be accepted.');
+        }
+
+        $order->is_accepted = true;
+        $order->save();
+
+        return redirect()->back()->with('success', 'Order accepted successfully.');
+    }
 }

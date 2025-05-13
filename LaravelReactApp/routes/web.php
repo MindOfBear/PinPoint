@@ -33,6 +33,7 @@ Route::middleware('auth')->group(function () {
 Route::post('/orders', [OrderController::class, 'store']);
 
 Route::post('/create-payment-intent', [StripePaymentController::class, 'createPaymentIntent']);
+Route::post('/orders/{id}/accept', [OrderController::class, 'accept']);
 
 
 require __DIR__.'/auth.php';

@@ -21,6 +21,7 @@ return new class extends Migration
             $table->timestamps();
             $table->string('buyer_email');
             $table->string('buyer_phone');
+            $table->boolean('is_accepted')->default(false);
         });
     }
 

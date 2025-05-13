@@ -1,4 +1,13 @@
 import { useState } from 'react';
+import { Pie } from 'react-chartjs-2';
+import {
+    Chart as ChartJS,
+    ArcElement,
+    Tooltip,
+    Legend
+} from 'chart.js';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usePage, Head, router } from '@inertiajs/react';
 import PostFeed from '@/Components/PostFeed';
@@ -40,8 +49,32 @@ export default function Edit({ mustVerifyEmail, status }) {
         >
             <Head title="Profile" />
             <ToastContainer />
+            {isVisible && (
+                <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8 mb-8">
+                    <div className='flex items-center'>
+                        <i className='fa fa-gears'/>
+                        <p className='text-xl ml-2 mt-10'>You are viewing settings</p>
+                    </div>
+
+                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+                        <UpdateProfileInformationForm
+                            mustVerifyEmail={mustVerifyEmail}
+                            status={status}
+                            className="max-w-xl"
+                        />
+                    </div>
+
+                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+                        <UpdatePasswordForm className="max-w-xl" />
+                    </div>
+
+                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+                        <DeleteUserForm className="max-w-xl" />
+                    </div>
+                </div>
+            )}
             <div className="py-12">
-                {/* Buttons to switch between sections */}
+                
                 <div className="flex justify-center mb-5 space-x-4">
                     <button 
                         onClick={() => setActiveSection('posts')}
@@ -90,7 +123,18 @@ export default function Edit({ mustVerifyEmail, status }) {
                                                 <p className="text-sm font-semibold text-gray-700"><strong>Post:</strong> {order.post ? order.post.content : 'Unknown'}</p>
                                                 <p className="text-sm font-medium text-gray-600"><strong>Seller:</strong> {order.seller ? order.seller.name : 'Unknown'}</p>
                                                 <p className="text-sm font-medium text-gray-600"><strong>Payment Method:</strong> {order.payment_method}</p>
-                                                <p className="text-sm font-medium text-gray-600"><strong>Status:</strong> {order.payment_status === 'success' ? <i className="fa fa-check-circle text-green-500"></i> : <i className="fa fa-times-circle text-red-500"></i>}</p>
+                                                <p className="text-sm font-medium text-gray-700"><strong>Amount: </strong>{order.post.price}€</p>
+                                                <p className="text-sm font-medium text-gray-600"><strong>Payment Status:</strong> {order.payment_status === 'success' ? <i className="fa fa-check-circle text-green-500"></i> : <i className="fa fa-times-circle text-red-500"></i>}</p>
+                                                <p className="text-sm font-medium text-gray-600">
+                                                    <strong>Confirmation:</strong>{' '}
+                                                    {!order.is_accepted && new Date() - new Date(order.created_at) >= 48 * 60 * 60 * 1000 ? (
+                                                        <span className="text-red-600 font-semibold">Expired <p className='text-gray-500 flex flex-row'>(Seller did not accept order in 48h)</p></span>
+                                                    ) : order.is_accepted ? (
+                                                        <span className="text-green-600 font-semibold">Accepted</span>
+                                                    ) : (
+                                                        <span className="text-yellow-600 font-semibold">Pending</span>
+                                                    )}
+                                                </p>
                                             </div>
                                             <div className="flex-shrink-0 ml-4">
                                                 {order.post && order.post.photo && (
@@ -113,7 +157,7 @@ export default function Edit({ mustVerifyEmail, status }) {
                 )}
 
                 {activeSection === 'sales' && (
-                    <div className="mt-10 flex justify-center">
+                    <div className="mt-10 flex justify-center gap-10 items-start">
                         <div className="bg-white p-6 shadow-lg rounded-md w-full max-w-3xl">
                             <h3 className="text-lg font-semibold">Your Sales</h3>
                             {seller_orders && seller_orders.length > 0 ? (
@@ -122,11 +166,48 @@ export default function Edit({ mustVerifyEmail, status }) {
                                         <div key={order.id} className="border-b mb-4 flex items-center justify-between py-4">
                                             <div className="flex-1">
                                                 <p className="text-sm font-bold text-gray-700 mb-1"><strong>Order: </strong>{order.post ? order.post.content : 'Unknown'}</p>
-                                                <p className="text-sm font-medium text-gray-600"><strong>Buyer Name:</strong> {order.buyer ? order.buyer.name : 'Unknown'}</p>
+                                                <p className="text-sm font-medium text-gray-600"><strong>Buyer Name:</strong> {order.name}</p>
+                                                <p className="text-sm font-medium text-gray-600"><strong>Buyer Email:</strong> {order.buyer_email}</p>
+                                                <p className="text-sm font-medium text-gray-600"><strong>Buyer Phone:</strong> {order.buyer_phone}</p>
                                                 <p className="text-sm font-medium text-gray-600"><strong>Delivery Address</strong> {order.address}</p>
                                                 <p className="text-sm font-medium text-gray-600"><strong>Amount:</strong> {order.post.price} EUR</p>
                                                 <p className="text-sm font-medium text-gray-600"><strong>Payment Method:</strong> {order.payment_method}</p>
                                                 <p className="text-sm font-medium text-gray-600"><strong>Payment Status:</strong> {order.payment_status === 'success' ? <i className="fa fa-check-circle text-green-500"></i> : <i className="fa fa-times-circle text-red-500"></i>}</p>
+                                                
+                                                <p className="text-sm font-medium text-gray-600">
+                                                    <strong>Confirmation:</strong>{' '}
+                                                    {!order.is_accepted && new Date() - new Date(order.created_at) >= 48 * 60 * 60 * 1000 ? (
+                                                        <span className="text-red-600 font-semibold">Expired (not accepted in 48h)</span>
+                                                    ) : order.is_accepted ? (
+                                                        <span className="text-green-600 font-semibold">Accepted</span>
+                                                    ) : (
+                                                        <span className="text-yellow-600 font-semibold">
+                                                            Pending - {Math.max(0, 48 - Math.floor((new Date() - new Date(order.created_at)) / (1000 * 60 * 60)))}h left
+                                                        </span>
+                                                    )}
+                                                </p>
+                                                {!order.is_accepted && new Date() - new Date(order.created_at) < 48 * 60 * 60 * 1000 ? (
+                                                    <button
+                                                        onClick={() => {
+                                                            router.post(`/orders/${order.id}/accept`, {}, {
+                                                                onSuccess: () => toast.success('Order accepted successfully!'),
+                                                                onError: () => toast.error('Failed to accept order.'),
+                                                            });
+                                                        }}
+                                                        className="mt-2 px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                                                    >
+                                                        Accept Order
+                                                    </button>
+                                                ) : (
+                                                    !order.is_accepted && (
+                                                        <button
+                                                            className="mt-2 px-4 py-1 bg-gray-400 text-white rounded cursor-not-allowed"
+                                                            disabled
+                                                        >
+                                                            Accept Expired
+                                                        </button>
+                                                    )
+                                                )}
                                             </div>
                                             <div className="flex-shrink-0 ml-4">
                                                 {order.post && order.post.photo && (
@@ -144,6 +225,22 @@ export default function Edit({ mustVerifyEmail, status }) {
                             ) : (
                                 <p className='text-md text-center font-semibold'>You haven't sold anything yet...</p>
                             )}
+                        </div>
+                        <div className="fixed rounded-2xl bottom-6 right-6 bg-white p-6 shadow-lg w-full max-w-xs z-50">
+                            <h3 className="text-lg font-semibold mb-4">Sales Overview</h3>
+                            <Pie data={{
+                                labels: seller_orders.map(order => order.post.content),
+                                datasets: [{
+                                    label: 'Price',
+                                    data: seller_orders.map(order => order.post.price || 0),
+                                    backgroundColor: seller_orders.map((_, i) => `hsl(${i * 40 % 360}, 70%, 60%)`),
+                                    borderWidth: 1
+                                }]
+                            }} />
+                            <div className="mt-4 text-right text-sm font-semibold text-gray-800">
+                                Total: {seller_orders.reduce((sum, o) => sum + Number(o.post?.price || 0), 0).toFixed(2)} EUR
+                            
+                            </div>
                         </div>
                     </div>
                 )}
