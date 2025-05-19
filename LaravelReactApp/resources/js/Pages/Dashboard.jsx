@@ -217,7 +217,7 @@ const Dashboard = () => {
             return;
         }
     
-        // Dacă plata este "ramburs", trimitem comanda fără a trece prin procesul Stripe
+    
         if (paymentMethod === 'ramburs') {
             try {
                 await axios.post('/orders', {
@@ -246,14 +246,14 @@ const Dashboard = () => {
         <AuthenticatedLayout
             header={
                 <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">Dashboard</h2>
+                    <h2 className="text-md font-semibold leading-tight text-gray-800">The place where you can see all the listenings on the market...</h2>
                     <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 bg-blue-500 text-white rounded">
                         Create a post
                     </button>
                 </div>
             }
         >
-            <Head title="Dashboard" />
+            <Head title="Market" />
             <ToastContainer />
 
             {showForm && (
@@ -404,7 +404,7 @@ const Dashboard = () => {
                                     amount={buyingPost.price}
                                     onSuccess={async () => {
                                         console.log('Payment successful!');
-                                        // Log the POST values for clarity
+                                        
                                         console.log('Posting order:', {
                                             post_id: buyingPost.id,
                                             seller_id: buyingPost.user.id,

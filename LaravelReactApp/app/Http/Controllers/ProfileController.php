@@ -15,14 +15,11 @@ use App\Models\Order;
 
 class ProfileController extends Controller
 {
-    /**
-     * Display the user's profile form.
-     */
+
     public function edit(Request $request): Response
     {
         $user = Auth::user();
 
-        // Fetch the user's posts
         $posts = Post::where('user_id', $user->id)
             ->with(['user', 'likes'])
             ->get();
@@ -32,13 +29,10 @@ class ProfileController extends Controller
             $post->liked_by_user = $post->likes->contains('user_id', $user->id);
         });
 
-        // Fetch the orders where the user is the buyer
         $buyer_orders = Order::with(['post', 'seller'])->where('buyer_id', $user->id)->get();
 
-        // Fetch the orders where the user is the seller
         $seller_orders = Order::with(['post', 'buyer'])->where('seller_id', $user->id)->get();
 
-        // Send the data to the frontend (Inertia)
         return Inertia::render('Profile/Edit', [
             'user' => $user,
             'posts' => $posts,
@@ -49,9 +43,6 @@ class ProfileController extends Controller
         ]);
     }
 
-    /**
-     * Update the user's profile information.
-     */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $request->user()->fill($request->validated());
@@ -65,9 +56,6 @@ class ProfileController extends Controller
         return Redirect::route('profile.edit');
     }
 
-    /**
-     * Delete the user's account.
-     */
     public function destroy(Request $request): RedirectResponse
     {
         $request->validate([

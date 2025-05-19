@@ -96,7 +96,7 @@ export default function Edit({ mustVerifyEmail, status }) {
                     </button>
                 </div>
 
-                {/* Display the correct section */}
+               
                 {activeSection === 'posts' && (
                     <div className="mx-auto max-w-3xl px-6 lg:px-8">
                         {posts && posts.length > 0 ? (
@@ -228,18 +228,28 @@ export default function Edit({ mustVerifyEmail, status }) {
                         </div>
                         <div className="fixed rounded-2xl bottom-6 right-6 bg-white p-6 shadow-lg w-full max-w-xs z-50">
                             <h3 className="text-lg font-semibold mb-4">Sales Overview</h3>
-                            <Doughnut data={{
-                                labels: seller_orders.map(order => order.post.content),
-                                datasets: [{
-                                    label: 'Price',
-                                    data: seller_orders.map(order => order.post.price || 0),
-                                    backgroundColor: seller_orders.map((_, i) => `hsl(${i * 40 % 360}, 70%, 60%)`),
-                                    borderWidth: 1
-                                }]
-                            }} />
-                            <div className="mt-4 text-right text-sm font-semibold text-gray-800">
-                                Total: {seller_orders.reduce((sum, o) => sum + Number(o.post?.price || 0), 0).toFixed(2)} EUR
-                            </div>
+                            {/*
+                              Only include accepted orders in the Doughnut chart and total.
+                            */}
+                            {(() => {
+                                const confirmedOrders = seller_orders.filter(order => order.is_accepted);
+                                return (
+                                    <>
+                                        <Doughnut data={{
+                                            labels: confirmedOrders.map(order => order.post.content),
+                                            datasets: [{
+                                                label: 'Price',
+                                                data: confirmedOrders.map(order => order.post.price || 0),
+                                                backgroundColor: confirmedOrders.map((_, i) => `hsl(${i * 40 % 360}, 70%, 60%)`),
+                                                borderWidth: 1
+                                            }]
+                                        }} />
+                                        <div className="mt-4 text-right text-sm font-semibold text-gray-800">
+                                            Total: {confirmedOrders.reduce((sum, o) => sum + Number(o.post?.price || 0), 0).toFixed(2)} EUR
+                                        </div>
+                                    </>
+                                );
+                            })()}
                         </div>
                     </div>
                 )}
