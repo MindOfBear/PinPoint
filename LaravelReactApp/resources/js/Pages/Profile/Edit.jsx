@@ -229,7 +229,7 @@ export default function Edit({ mustVerifyEmail, status }) {
                         <div className="fixed rounded-2xl bottom-6 right-6 bg-white p-6 shadow-lg w-full max-w-xs z-50">
                             <h3 className="text-lg font-semibold mb-4">Sales Overview</h3>
                             {/*
-                              Only include accepted orders in the Doughnut chart and total.
+                              doughnut chart
                             */}
                             {(() => {
                                 const confirmedOrders = seller_orders.filter(order => order.is_accepted);
